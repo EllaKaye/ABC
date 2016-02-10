@@ -1,0 +1,54 @@
+\documentclass{article} % For LaTeX2e
+\begin{document}
+\section{Semi-automatic ABC}
+A particular problem with the implementation of ABC is the selection of suitable statistics to reduce the dimension of the data for parameter inference. Apart from simpler cases sufficient statistics are not available.
+
+Fearnhead and Prangle \cite{Fearnhead} propose a solution to this problem:
+\begin{itemize}
+\item Use an initial run of ABC to determine a posterior region of non-negligible mass
+\item Simulate sets of parameter values and data
+\item Use the simulated parameters values and data to estimate summary statistics
+\item Run ABC using this choice of summary statistics
+\end{itemize}
+
+Step (iii) is performed using a linear regression of the data on the parameters to see which aspects of the data can be best used to infer the parameter values.
+
+\section{g and k distribution}
+To examine the effectiveness of the semi-automatic we implemented an example from \cite{Fearnhead and Prangle}.
+
+[What is the g k distribution]
+The example focused on the g and k distribution, which is used for modelling non-standard data through a small number of parameters. The distribution is defined by its inverse:
+
+\begin{equation}
+F^{-1}(x, A, B, c, g, k) = A + B\left(1 + c\frac{1-exp(-gz(x)}{1+exp(-gz(x)}\right)(1+z(x)^2)^kz(x)
+\end{equation}
+
+\begin{itemize}
+\item \textbf{A} - a location parameter
+\item \textbf{B} - a scale parameter restricted to be $>0$
+\item \textbf{g} - controls the skewness of the data
+\item \textbf{k} - controls the kurtosis of the data and is restricted to be $> - 0.5$
+\item \textbf{c} - is assumed known throughout and set as 0.8
+\item \textbf{$z(x)$}
+\end{itemize}
+
+The likelihood can be calculated but can be costly. The distribution can be easily simulated from via the inversion method which makes it ideal for ABC.
+
+\section{Experiments}
+Following from the examples in \cite{Fearnhead} we simulate an 'observed' dataset using the parameters. Under the assumption that $c$ is known, we have the unknown parameters $\theta = (A, B, g, k)$. We assume a flat prior on the data of $\theta = [0, 10]^4$.
+
+We simulate $10^4$ independent observations from the g-and-k distribution with $\theta = (3, 1, 2, 0.5)$
+
+\section{Semi-automatic ABC}
+We consider the order statistics as used by Allingham et al \cite{Allingham}. As in \cite{Fearnhead} we also consider the powers of the order statistics.
+
+
+
+\section{Choice of summary statistics}
+A good choice of summary statistic to be used would be one where the distance between the summary statistic for the observed data and for the simulated data should be minimised where the simulated $\theta$ corresponds with the true $\theta$ We considered this in the case of the g and k distribution. We considered whether it would be possible to discover values for $\theta$ which were blatantly wrong but still provided approximately optimal results.
+
+
+
+
+
+\end{document}
