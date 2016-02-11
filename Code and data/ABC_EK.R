@@ -1,4 +1,4 @@
-# setwd("~/Box Sync/My Education/OxWaSP/Modules/Module 6/ABC/Code and data")
+setwd("~/Box Sync/My Education/OxWaSP/Modules/Module 6/ABC/Report")
 library(abctools)
 library(gk)
 library(ggplot2)
@@ -43,7 +43,7 @@ gk_param_plot <- function(post_samples) {
   p <- qplot(value, data = melted, geom = "histogram") 
   p <- p + facet_wrap( ~ parameter, scales = "free")
   vline.data <- data.frame(z=c(3, 1, 2, 0.5), parameter = c("A", "B", "g", "k"))
-  p + geom_vline(aes(xintercept = z), vline.data, colour="red")
+  p + geom_vline(aes(xintercept = z), vline.data, colour="red") + theme_bw()
 }
 
 
@@ -54,7 +54,9 @@ abc.gk.rej.L <- abc(target = obs,
                   sumstat = gkdataL[,-(1:4)],
                   tol = 0.001,
                   method = "rejection")
+pdf("GK_REJ_L_HIST.pdf", height=4)
 gk_param_plot(abc.gk.rej.L$unadj.values)
+dev.off()
 
 # regression
 abc.gk.reg.L <- abc(target = obs,
@@ -62,7 +64,9 @@ abc.gk.reg.L <- abc(target = obs,
                     sumstat = gkdataL[,-(1:4)],
                     tol = 0.005,
                     method = "loclinear")
+pdf("GK_REG_L_HIST.pdf", height=4)
 gk_param_plot(abc.gk.reg.L$adj.values)
+dev.off()
 
 # repeat for small data set
 load("gkdata.rda")
@@ -87,7 +91,9 @@ abc.gk.rej.S <- abc(target = obs_S,
                     sumstat = gkdata[,-(1:4)],
                     tol = 0.005,
                     method = "rejection")
+pdf("GK_REJ_S_HIST.pdf", height=4)
 gk_param_plot(abc.gk.rej.S$unadj.values)
+dev.off()
 
 # regression
 abc.gk.reg.S <- abc(target = obs_S,
@@ -95,8 +101,9 @@ abc.gk.reg.S <- abc(target = obs_S,
                     sumstat = gkdata[,-(1:4)],
                     tol = 0.01,
                     method = "loclinear")
+pdf("GK_REG_S_HIST.pdf", height=4)
 gk_param_plot(abc.gk.reg.S$adj.values)
-
+dev.off()
 
 ## Doing much better with small dataset
 
@@ -112,23 +119,26 @@ saabc.gk <- semiauto.abc(obs = obs,
                          abcprop = 1, method = "loclinear",
                          final.dens = T
 )
-
+pdf("GK_REG_L_HIST_SA.pdf", height=4)
 gk_param_plot(saabc.gk$post.sample)
+dev.off()
 
 # Generate 2d density of the accepted parameters
 dens_gk_ab <- kde2d(saabc.gk$post.sample[, 1],
                     saabc.gk$post.sample[, 2])
 
 # Contour plot of A vs B
+pdf("GK_REG_L_CONT_AB.pdf", height=4)
 filled.contour(dens_gk_ab, xlab = "A", ylab = "B",plot.axes = {points(3, 1); axis(1); axis(2)},
                color.palette = function(x){palette("#FF0000", "#FFFF00", x)})
-
+dev.off()
 
 dens_gk_gk <- kde2d(saabc.gk$post.sample[, 3],
                     saabc.gk$post.sample[, 4])
+pdf("GK_REG_L_CONT_GK.pdf", height=4)
 filled.contour(dens_gk_gk, xlab = "g", ylab = "k", plot.axes = { points(2, 0.5); axis(1); axis(2) }, 
                color.palette = function(x){palette("#FF0000", "#FFFF00", x)})
-
+dev.off()
 
 ##############################################################
 
