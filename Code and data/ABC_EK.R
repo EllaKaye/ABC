@@ -140,6 +140,62 @@ filled.contour(dens_gk_gk, xlab = "g", ylab = "k", plot.axes = { points(2, 0.5);
                color.palette = function(x){palette("#FF0000", "#FFFF00", x)})
 dev.off()
 
+
+# With mid-sized data
+# load("gkdataM.rda")
+dim(gkdataM)
+
+obsM <- ord_stats_obs(60, 10000)
+
+# cross-validation
+cv.res.reg.M <- cv4abc(param = gkdataM[,1:4], sumstat = gkdataM[,-(1:4)], nval=10, tols=c(0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1), method="loclinear")
+summary(cv.res.reg.M) # 0.01 or 0.005 best
+plot(cv.res.reg.M)
+
+# regression
+abc.gk.reg.M <- abc(target = obsM,
+                    param = gkdataM[,1:4],
+                    sumstat = gkdataM[,-(1:4)],
+                    tol = 0.01,
+                    method = "loclinear")
+pdf("GK_REG_M_HIST.pdf", height=4)
+gk_param_plot(abc.gk.reg.M$adj.values)
+dev.off()
+
+dim(abc.gk.reg.M$adj.values)
+
+# semi-automatic
+saabc.gk_M <- semiauto.abc(obs = obsM,
+                         param = gkdataM[,1:4],
+                         sumstats = gkdataM[,-(1:4)],
+                         satr = mytf,
+                         tol = 0.01, overlap = T, saprop = 1,
+                         abcprop = 1, method = "loclinear",
+                         final.dens = T
+)
+pdf("GK_REG_M_HIST_SA.pdf", height=4)
+gk_param_plot(saabc.gk_M$post.sample)
+dev.off()
+
+# Generate 2d density of the accepted parameters
+dens_gk_ab <- kde2d(saabc.gk_M$post.sample[, 1],
+                    saabc.gk_M$post.sample[, 2])
+
+# Contour plot of A vs B
+pdf("GK_REG_M_CONT_AB_SA.pdf", height=4)
+filled.contour(dens_gk_ab, xlab = "A", ylab = "B",plot.axes = {points(3, 1); axis(1); axis(2)},
+               color.palette = function(x){palette("#FF0000", "#FFFF00", x)})
+dev.off()
+
+dens_gk_gk <- kde2d(saabc.gk_M$post.sample[, 3],
+                    saabc.gk_M$post.sample[, 4])
+pdf("GK_REG_M_CONT_GK_SA.pdf", height=4)
+filled.contour(dens_gk_gk, xlab = "g", ylab = "k", plot.axes = { points(2, 0.5); axis(1); axis(2) }, 
+               color.palette = function(x){palette("#FF0000", "#FFFF00", x)})
+dev.off()
+
+
+
 ##############################################################
 
 # cross-validation
