@@ -2,7 +2,7 @@
 %Use article for short documents
 \usepackage[T1]{fontenc}
 \usepackage{parskip}
-\usepackage{latexsym,amsmath,amssymb}
+\usepackage{latexsym,amsmath,amssymb, tabu}
 \usepackage[natbibapa]{apacite}
 \usepackage{graphicx}
 \usepackage{times}
@@ -25,7 +25,6 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 % \usepackage[noend]{algpseudocode}
-
 
 \DeclareMathOperator{\expectation}{E}
 
@@ -85,7 +84,16 @@ When $\epsilon = 0$, the algorithm samples from the partial posterior. A toy exa
 
 The selection of summary statistics is also crucial to the accuracy and efficiency of ABC. Again, there is a trade-off. With a large number of summary statistics, the error in the approximation of $p(\theta | y_\textrm{obs})$ by $p(\theta | s_\textrm{obs})$ is likely to be reduced, but the approximation of $p(\theta | y_\textrm{obs})$ by $p_\epsilon(\theta | y_\textrm{obs})$ is likely to be poor because of inefficiency. On the other hand, with only a few summary statistics, the second approximation should be good, but the first will be poor. We have that $\pi(\Theta | s_\textrm{obs}) = \pi(\Theta | y_\textrm{obs})$ if $s_\textrm{obs})$ is a sufficient statistic. However, in many applications, it will not be possible to find sufficient statistics. In early applications of ABC, summary statistics tended to be chosen in a fairly ad hoc manner. One more principled approach is that of best subset selection, which considers whether an additional summary statistic $s_k$ should be added to a model that already contains statistics $s_1, \ldots, s_{k-1}$. Even when implemented with a step-wise search algorithm, this approach becomes computationally unwieldy whenever $k$ is large. Moreover, it needs an additional tuning parameter to determine the threshold at which each statistic is either accepted or rejected. It is also possible that an accepted statistic actually biases approximation away from the true posterior.
 
-Another approach to dimension reduction is semi-automatic ABC. \textbf{NATHAN ADD MORE HERE.}
+To overcome one of these obstacles, Fearnhead and Prangle \cite{Fearnhead2012} have proposed semi-automatic ABC as a means of methodically selecting summary statistics for inclusion in ABC. The method proceeds as follows:
+
+\begin{itemize}
+\item Run an inital run of ABC to find a posterior region of non-negligible mass
+\item Simulate parameter values and resulting proposal summary statistcs
+\item For each parameter run a linear regression against the summary statistics to find. Use an information criterion such as BIC to determine which summary statistics can best be used to infer the parameter values.
+\item Run ABC using this choice of summary statistics
+\end{itemize}
+
+We consider the effectiveness of this method in Section \cite{sec:saabc}.
 
 There are a number of improvements that can be made to Algorithm \ref{alg:ABCrej} to correct for the distance between $S(y_i)$ and $S(y_\textrm{obs})$. One, suggested by REF BEAUMONT ET AL uses local linear regression, so that for each simulated $z$, we set 
 \[
@@ -267,6 +275,10 @@ In conclusion, a confidence level of $20\%$ is good enough for ABC to approximat
 \label{rejections}
 \end{figure}
 
+
+
+
+
 \section{Conclusion}
 It was found that in these ABC experiments, ABC does approximate the posterior distribution well but can suffer from high rejection rates. A good confidence level, or threshold, is one which is small enough that samples, drawn from ABC, approximates the posterior distribution well but big enough the rejection rate is feasible.
 
@@ -275,6 +287,78 @@ The hypothesis tests used were chosen so that comparison of two samples was done
 When the posterior distribution is not known, then there is no way to tell how well ABC approximates the posterior. The threshold can be set as small as possible to minimize error, however high rejection rates will happen especially if the prior distribution is very different to the posterior distribution.
 
 It should also be noted that improper priors cannot be simulated thus cannot be used for ABC in this context.
+
+
+\section{The g-and-k distribution}
+We consider an implementation of ABC on data generated from the g-and-k distribution. This distribution is a flexibly shaped distribution used to model non-standard data via a small number of parameters. The distribution is defined by its inverse:
+
+\begin{equation}
+F^{-1}(x, A, B, c, g, k) = A + B\left(1 + c\frac{1-exp(-gz(x)}{1+exp(-gz(x)}\right)(1+z(x)^2)^kz(x)
+\end{equation}
+
+with parameters:
+\begin{itemize}
+\item \textbf{A} - a location parameter
+\item \textbf{B} - a scale parameter restricted to be $>0$
+\item \textbf{g} - controls the skewness of the data
+\item \textbf{k} - controls the kurtosis of the data and is restricted to be $> - 0.5$
+\item \textbf{c} - is assumed known throughout and set as 0.8
+\item \textbf{$z(x)$}
+\end{itemize}
+
+The likelihood can be calculated but can be costly. The distribution can be easily simulated from via the inversion method which makes it ideal for ABC. However, a suitable choice of summary statistics is not immediately obvious, making this suitable for semi-automatic ABC.
+
+Following from the example in \cite{Fearnhead2012} we simulate an 'observed' dataset containing $10^4$ observations under the parameters, $\theta_0 = (A, B, g, k, c) = (3, 1, 2, 0.5, 0.8)$. The parameter $c$ is assumed known throughout, so we have the unknown $\theta = (A, B, g, k)$. We assume a flat prior $\theta = [0, 10]^4$.
+
+\cite{allingham2009}, in analysing these data used the full order statistics as the summary statistics. Following from \cite{Fearnhead2012} we consider a range of order statistics from 60 to 140, and transformations of these including $f(x) = (x, x^2, x^3, x^4)$ as these correspond to the position, scale, skewness, and kurtosis of the data, which should give better information regarding all the parameters.
+
+
+\begin{center}
+\begin{table}[h]
+\label{tab:bic}
+  $\begin{tabu}{ l | r | r | r | r | r}
+  \hline			
+    & A & B & g & k & mean \\
+  m = 60, l = 1 	& -477,275.1 & -144,985.4	 & 359,180.7	 & 359,142.5  & 24,015.675 \\
+  m = 60, l = 2  	& -477,238.5 & -146,515.7	 & 346,921.0 	 & 314,714.5 & 9,470.325  \\
+  m = 60, l = 3 	& -477,115.1 & -147,346.7	 & 339,500.3  	 & 289,321.1 & 1,089.9 \\
+  m = 60, l = 4 	& -476,789.4 & -147,788.8	 & 333,963.4  	 & 267,438.7 & -5,794.025 \\
+  \hline
+  m = 100, l = 1 	& -475,500.9 & -142,653.4  & 359,574.0 	 & 359,592.1 & 25,252.95 \\
+  m = 100, l = 2  	& -475,192.0 & -144,027.1	 & 347,352.0 	 & 315,207.7 & 10,835.15\\
+  m = 100, l = 3 	& -474,537.7 & -144,383.6	 & 340,605.3 	 & 290,100.3 & 2,946.075 \\
+  m = 100, l = 4 	& -473,801.6 & -144,328.4	 & 335,512.2 	 & 268,829.3 & -3,447.125 \\
+  \hline
+  m = 140, l = 1 	& -476,547.0 & -144,126.4  & 360,009.4		 & 359,916.1 & 24,813.025  \\
+  m = 140, l = 2  	& -475,741.5 & -144,858.0  & 348,367.8   	 & 316,093.5 & 10,965.45\\
+  m = 140, l = 3 	& -474,795.7 & -144,865.4  & 341,789.4 	 & 291,313.5 & 3,360.45   \\
+  m = 140, l = 4 	& -473,678.3  & -144,479.1   & 337,162.2    & 270,057.9 & -2,734.325  \\
+  \hline 
+  \end{tabu} $
+    \caption{The BIC resulting from inferring the parameter values from the order statistics for a variety of number of order statistics (m), and powers of these (l)}
+\end{table}
+\end{center}
+
+Similar to \cite{Fearnhead2012} we find that the BIC is minimised as we increase the powers of our summary statistics to be used in the ABC algorithm. Figure \ref{fig:powers} shows the additional inferential power of adding these additional powers, particularly in relation to parameters g and k. However, where they found the BIC minimised at 100 order statistics, we found it minimised at a lower value of 60. This reduced dimension is preferable.
+
+\begin{figure}
+\label{fig:powers}
+\includegraphics[width = \linewidth]{firstorder.pdf}
+\includegraphics[width = \linewidth]{fourthorder.pdf}
+\caption{Fitted parameter values vs actual parameter value from the summary statistics selection stage of the semi-auto ABC algorithm with 1 power included (top) and 4 powers included (bottom).}
+\end{figure}
+
+
+
+Given the summary statistics selected above, we proceed to perform the ABC analysis, using the $abctools$ package in R.
+We performed cross-validation to select $\epsilon$ the tolerance level. We used the methods of rejection sampling and 'loclinear' to perform the ABC.
+
+The results are as follows:
+\begin{figure}
+\label{}
+\includegraphics[]{GK_}
+\end{figure}
+
 
 
 % \subsection{Method}
@@ -428,11 +512,11 @@ It should also be noted that improper priors cannot be simulated thus cannot be 
 % It was found that in these ABC experiments, ABC does approximate the posterior distribution well but can suffer from high rejection rates. A good threshold is one which is small enough that samples from ABC approximate the posterior distribution well but big enough the rejection rate is feasible. It should also be noted that improper priors cannot be simulated thus cannot be used for ABC.
 
 % When the posterior distribution is not known, then there is no way to tell how well ABC approximates the posterior. The threshold can be set as small as possible, however high rejection rates will happen, especially if the prior distribution is very different to the posterior distribution.
-% % \bibliography{Module2bib}
 
 \section{Conclusions}
 Many more sophisticated versions of ABC.
 
+\bibliography{ABC}
 \end{document}
 
 \begin{figure}[h] 
